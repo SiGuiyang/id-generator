@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: id-generator
+  datasource:
+    url: jdbc:h2:mem:id_generator
+    username: root
+    password: root
+    driver-class-name: org.h2.Driver
+    schema: classpath:schema.sql
+
+mybatis:
+  configuration:
+      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  mapper-locations: classpath*:quick/pager/id/generator/demo/mapper/*.xml
+  type-aliases-package: quick.pager.id.generator.demo.model
+server:
+  port: 8081

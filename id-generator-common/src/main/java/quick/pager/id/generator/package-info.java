@@ -1,0 +1,1 @@
+package quick.pager.id.generator;
