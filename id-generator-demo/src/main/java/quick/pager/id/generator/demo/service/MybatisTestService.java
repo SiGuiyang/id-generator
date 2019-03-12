@@ -12,13 +12,19 @@ public class MybatisTestService {
     private PersonMapper personMapper;
 
     public void insert() {
+        Person person = new Person();
+        person.setId(1L);
+        person.setUsername("test");
+        person.setAge(20);
+        person.setGender(false);
 
+        personMapper.insertSelective(person);
     }
 
     public void testSelectMybatis() {
 
         Person person = new Person();
-        person.setId(1L);
+//        person.setId(1L);
         person.setUsername("test");
         person.setAge(20);
         person.setGender(false);

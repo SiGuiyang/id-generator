@@ -16,7 +16,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.test.context.junit4.SpringRunner;
-import quick.pager.id.generator.web.model.IdGenerator;
+import quick.pager.id.generator.web.model.Segment;
 import quick.pager.id.generator.web.redis.GeneratorRedisTemplate;
 
 
@@ -81,7 +81,7 @@ public class IdGeneratorWebApplicationTests {
 
     @Test
     public void testJdbcTemplate() {
-        IdGenerator idGenerator = jdbcTemplate.queryForObject(SELECT_ONE_SQL, new Object[]{"test"}, new BeanPropertyRowMapper<>(IdGenerator.class));
+        Segment idGenerator = jdbcTemplate.queryForObject(SELECT_ONE_SQL, new Object[]{"test"}, new BeanPropertyRowMapper<>(Segment.class));
         System.out.println(idGenerator);
 
 

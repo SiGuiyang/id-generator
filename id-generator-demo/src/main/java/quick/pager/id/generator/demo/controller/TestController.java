@@ -35,6 +35,7 @@ public class TestController {
         return "success";
     }
 
+    @GetMapping("/selectJPA")
     public String testJPA() {
         jpaTestService.insert();
         return "success";

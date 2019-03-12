@@ -7,10 +7,15 @@ spring:
     password: root
     driver-class-name: org.h2.Driver
     schema: classpath:schema.sql
+  jpa:
+    database: mysql
+    show-sql: true
+    hibernate:
+      ddl-auto: update
 
 mybatis:
   configuration:
-      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   mapper-locations: classpath*:quick/pager/id/generator/demo/mapper/*.xml
   type-aliases-package: quick.pager.id.generator.demo.model
 server:

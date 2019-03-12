@@ -7,7 +7,7 @@ import lombok.ToString;
 
 @Data
 @ToString
-public class IdGenerator implements Serializable {
+public class Segment implements Serializable {
 
     private Long id;
     /**

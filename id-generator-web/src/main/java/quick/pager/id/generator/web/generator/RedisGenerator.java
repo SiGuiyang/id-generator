@@ -12,7 +12,7 @@ import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
-import quick.pager.id.generator.web.model.IdGenerator;
+import quick.pager.id.generator.web.model.Segment;
 import quick.pager.id.generator.web.redis.GeneratorRedisTemplate;
 import quick.pager.id.generator.web.service.GeneratorLoad;
 
@@ -32,8 +32,8 @@ public class RedisGenerator extends AbstractGenerator {
     // redis key 锁
     private static final String ID_GENERATOR_LOCK_KEYS = "id_generator_lock_keys:";
 
-    public RedisGenerator(String bizName, GeneratorLoad generatorLoad, ExecutorService executorService, GeneratorRedisTemplate generatorRedisTemplate) {
-        super(bizName, generatorLoad, executorService);
+    public RedisGenerator(String bizName, Integer steps, GeneratorLoad generatorLoad, ExecutorService executorService, GeneratorRedisTemplate generatorRedisTemplate) {
+        super(bizName, steps, generatorLoad, executorService);
         this.generatorRedisTemplate = generatorRedisTemplate;
     }
 
@@ -49,7 +49,8 @@ public class RedisGenerator extends AbstractGenerator {
     @Override
     public boolean loadOverflow() {
         Long size = generatorRedisTemplate.opsForList().size(getRedisKeys());
-        return null == size || 0 == size;
+
+        return (null == size) || (0 == size) || (this.getSteps() * 0.9 <= size);
     }
 
     @Override
@@ -58,9 +59,9 @@ public class RedisGenerator extends AbstractGenerator {
             // 加锁
             if (setRedisLock()) {
                 getExecutorService().execute(() -> {
-                    IdGenerator idGenerator = getGeneratorLoad().load();
-                    Long start = idGenerator.getSegment() + 1;
-                    Integer steps = idGenerator.getSteps();
+                    Segment segment = getGeneratorLoad().load();
+                    Long start = segment.getSegment() + 1;
+                    Integer steps = segment.getSteps();
                     Long[] longs = new Long[steps];
 
                     for (int i = 0; i < steps; i++) {

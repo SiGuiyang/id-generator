@@ -1,6 +1,6 @@
 package quick.pager.id.generator.web.service;
 
-import quick.pager.id.generator.web.model.IdGenerator;
+import quick.pager.id.generator.web.model.Segment;
 
 @FunctionalInterface
 public interface GeneratorLoad {
@@ -8,5 +8,5 @@ public interface GeneratorLoad {
     /**
      * 加载一条IdGenerator 记录
      */
-    IdGenerator load();
+    Segment load();
 }

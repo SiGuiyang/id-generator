@@ -3,6 +3,6 @@
 <configuration>
 
     <plugins>
-        <plugin interceptor="quick.pager.id.generator.IdGeneratorInterceptor"/>
+        <plugin interceptor="quick.pager.id.generator.MybatisIdGeneratorInterceptor"/>
     </plugins>
 </configuration>

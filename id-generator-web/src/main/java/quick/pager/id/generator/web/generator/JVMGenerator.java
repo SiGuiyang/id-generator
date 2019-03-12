@@ -6,7 +6,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import quick.pager.id.generator.web.model.IdGenerator;
+import quick.pager.id.generator.web.model.Segment;
 import quick.pager.id.generator.web.service.GeneratorLoad;
 
 /**
@@ -21,8 +21,8 @@ public class JVMGenerator extends AbstractGenerator {
     // id 队列缓存
     private static final BlockingDeque<Long> BLOCKING_DEQUE = new LinkedBlockingDeque<>();
 
-    public JVMGenerator(String bizName, GeneratorLoad generatorLoad, ExecutorService executorService) {
-        super(bizName, generatorLoad, executorService);
+    public JVMGenerator(String bizName, Integer steps, GeneratorLoad generatorLoad, ExecutorService executorService) {
+        super(bizName, steps, generatorLoad, executorService);
     }
 
     @Override
@@ -40,7 +40,7 @@ public class JVMGenerator extends AbstractGenerator {
 
     @Override
     public boolean loadOverflow() {
-        return BLOCKING_DEQUE.isEmpty();
+        return BLOCKING_DEQUE.isEmpty() || (this.getSteps() * 0.9 <= BLOCKING_DEQUE.size());
     }
 
     @Override
@@ -50,9 +50,9 @@ public class JVMGenerator extends AbstractGenerator {
             synchronized (this.getBizName()) {
                 setRunning(true);
                 getExecutorService().execute(() -> {
-                    IdGenerator idGenerator = getGeneratorLoad().load();
-                    Long start = idGenerator.getSegment() + 1;
-                    Integer steps = idGenerator.getSteps();
+                    Segment segment = getGeneratorLoad().load();
+                    long start = segment.getSegment() + 1;
+                    Integer steps = segment.getSteps();
 
                     for (int i = 0; i < steps; i++) {
                         BLOCKING_DEQUE.offer(start + i);

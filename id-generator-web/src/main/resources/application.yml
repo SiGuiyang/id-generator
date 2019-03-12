@@ -11,6 +11,11 @@ spring:
     template:
       query-timeout: 3
 
+server:
+  tomcat:
+    max-threads: 1000
+    max-connections: 10000
 
-dubbo:
-  host:
+id:
+  generator:
+    redis: true

@@ -7,15 +7,17 @@ import java.util.concurrent.Executors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import quick.pager.id.generator.constants.Constants;
 import quick.pager.id.generator.resp.Response;
+import quick.pager.id.generator.web.GeneratorContext;
+import quick.pager.id.generator.web.dao.GeneratorDao;
 import quick.pager.id.generator.web.generator.IGenerator;
 import quick.pager.id.generator.web.generator.JVMGenerator;
 import quick.pager.id.generator.web.generator.RedisGenerator;
-import quick.pager.id.generator.web.model.IdGenerator;
+import quick.pager.id.generator.web.generator.ZeroGenerator;
+import quick.pager.id.generator.web.model.Segment;
 import quick.pager.id.generator.web.redis.GeneratorRedisTemplate;
 
 @Service
@@ -25,21 +27,13 @@ public class IdGeneratorService implements IdService, InitializingBean {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @Autowired
-    private GeneratorRedisTemplate generatorRedisTemplate;
-
+    private GeneratorDao dao;
 
     /**
      * Id 生成器缓存
      */
     private static final Map<String, IGenerator> CACHE = new ConcurrentHashMap<>(1000);
 
-    // 查询所有的自增策略sql语句
-    private static final String ALL_SQL = "select `id`, `biz_name`, `description`, `segment`,  `biz_type`, `steps`, `create_time`, `delete_status` from `id_generator` where `delete_status` = 0";
-    // 根据biz_name 查询Id的自增策略
-    private static final String SELECT_ONE_SQL = "select `id`, `biz_name`, `description`, `segment`,  `biz_type`, `steps`, `create_time`, `delete_status` from `id_generator` where `biz_name` = ? and `delete_status` = 0";
-    // 根据biz_name 更新segment 值
-    private static final String UPDATE_LOAD_SEGMENT_SQL = "update `id_generator` set `segment`= `segment` + `steps` where `biz_name` = ?";
 
     @Override
     public Response<Long> getGeneratorId(String bizName) {
@@ -56,24 +50,30 @@ public class IdGeneratorService implements IdService, InitializingBean {
     @Override
     public void afterPropertiesSet() throws Exception {
         log.info("系统初始化加载数据开始。。。。");
-        List<IdGenerator> generators = jdbcTemplate.query(ALL_SQL, new BeanPropertyRowMapper<>(IdGenerator.class));
+        dao = new GeneratorDao(jdbcTemplate);
+        List<Segment> segments = dao.selectAll();
         IGenerator iGenerator = null;
-        for (IdGenerator generator : generators) {
-            String bizName = generator.getBizName();
+        for (Segment segment : segments) {
+            String bizName = segment.getBizName();
             // 从JVM 中获取号段
-            if (Constants.BizType.JVM.type == generator.getBizType()) {
+            if (Constants.BizType.JVM.type == segment.getBizType()) {
 
-                iGenerator = new JVMGenerator(bizName, () -> loadIdGenerator(bizName)
+                iGenerator = new JVMGenerator(bizName, segment.getSteps(), () -> dao.updateAndLoadSegment(bizName)
                         , Executors.newWorkStealingPool());
             }
             // 从redis 中获取号段
-            else if (Constants.BizType.REDIS.type == generator.getBizType()) {
-                iGenerator = new RedisGenerator(bizName, () -> loadIdGenerator(bizName)
-                        , Executors.newWorkStealingPool(), generatorRedisTemplate);
-            }
-            // 从zookeeper 中获取号段
-            else if (Constants.BizType.ZOOKEEPER.type == generator.getBizType()) {
+            else if (Constants.BizType.REDIS.type == segment.getBizType()) {
 
+                try {
+
+                    GeneratorRedisTemplate generatorRedisTemplate = GeneratorContext.getBean(GeneratorRedisTemplate.class);
+
+                    iGenerator = new RedisGenerator(bizName, segment.getSteps(), () -> dao.updateAndLoadSegment(bizName)
+                            , Executors.newWorkStealingPool(), generatorRedisTemplate);
+                } catch (Exception e) {
+                    log.error("此业务号段是redis 方式，请配置【id.generator.redis=true】，业务号段 biz_name = {}", bizName);
+                    iGenerator = new ZeroGenerator();
+                }
             } else {
                 log.warn("未知Id生成策略 biz_name = {}" + bizName);
             }
@@ -84,14 +84,4 @@ public class IdGeneratorService implements IdService, InitializingBean {
         log.info("系统刚初始化加载完成。。。。");
     }
 
-
-    private IdGenerator loadIdGenerator(String bizName) {
-
-        int update = jdbcTemplate.update(UPDATE_LOAD_SEGMENT_SQL, bizName);
-        if (update < 0) {
-            throw new RuntimeException("号段值更新异常 bizName = " + bizName);
-        }
-
-        return jdbcTemplate.queryForObject(SELECT_ONE_SQL, new Object[]{bizName}, new BeanPropertyRowMapper<>(IdGenerator.class));
-    }
 }

@@ -2,7 +2,7 @@ package quick.pager.id.generator.web.generator;
 
 @FunctionalInterface
 public interface IGenerator {
-
+    
     /**
      * 获取当前的Id值
      */
