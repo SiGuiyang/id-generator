@@ -2,8 +2,12 @@ package quick.pager.id.generator.web.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,23 +31,36 @@ public class IdGeneratorService implements IdService, InitializingBean {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    private static Random ran = new Random();
+
+    private static ExecutorService service = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(), Integer.MAX_VALUE,
+            60L, TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<>(), r -> new Thread(r, "Thread-ID-Generator-" + ran.nextInt(10)));
+
     private GeneratorDao dao;
 
     /**
      * Id 生成器缓存
      */
-    private static final Map<String, IGenerator> CACHE = new ConcurrentHashMap<>(1000);
+    private static final Map<String, IGenerator> CACHE = new ConcurrentHashMap<>(32);
 
 
     @Override
     public Response<Long> getGeneratorId(String bizName) {
         if (!CACHE.containsKey(bizName)) {
-            return new Response<>(201, "不存在此biz_name = " + bizName + " 号段");
+            log.error("未找到对应的Id生成业务号段 bizName = {}", bizName);
+            return new Response<>(201, "未找到对应的Id生成业务号段 = " + bizName + " 号段");
         }
         // 生成策略
         IGenerator iGenerator = CACHE.get(bizName);
+
+        if (null == iGenerator) {
+            log.error("iGenerator 未找到对应的Id生成业务号段 bizName = {}", bizName);
+            iGenerator = new ZeroGenerator();
+        }
+
         long value = iGenerator.getGeneratorId().longValue();
-        System.out.println(value);
+
         return new Response<>(value);
     }
 
@@ -56,20 +73,20 @@ public class IdGeneratorService implements IdService, InitializingBean {
         for (Segment segment : segments) {
             String bizName = segment.getBizName();
             // 从JVM 中获取号段
-            if (Constants.BizType.JVM.type == segment.getBizType()) {
+            if (Constants.BizType.JVM.getType() == segment.getBizType()) {
 
                 iGenerator = new JVMGenerator(bizName, segment.getSteps(), () -> dao.updateAndLoadSegment(bizName)
-                        , Executors.newWorkStealingPool());
+                        , service);
             }
             // 从redis 中获取号段
-            else if (Constants.BizType.REDIS.type == segment.getBizType()) {
+            else if (Constants.BizType.REDIS.getType() == segment.getBizType()) {
 
                 try {
 
                     GeneratorRedisTemplate generatorRedisTemplate = GeneratorContext.getBean(GeneratorRedisTemplate.class);
 
                     iGenerator = new RedisGenerator(bizName, segment.getSteps(), () -> dao.updateAndLoadSegment(bizName)
-                            , Executors.newWorkStealingPool(), generatorRedisTemplate);
+                            , service, generatorRedisTemplate);
                 } catch (Exception e) {
                     log.error("此业务号段是redis 方式，请配置【id.generator.redis=true】，业务号段 biz_name = {}", bizName);
                     iGenerator = new ZeroGenerator();

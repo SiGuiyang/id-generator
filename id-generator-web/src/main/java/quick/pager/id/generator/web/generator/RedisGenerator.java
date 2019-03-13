@@ -50,7 +50,7 @@ public class RedisGenerator extends AbstractGenerator {
     public boolean loadOverflow() {
         Long size = generatorRedisTemplate.opsForList().size(getRedisKeys());
 
-        return (null == size) || (0 == size) || (this.getSteps() * 0.9 <= size);
+        return (null == size) || (0 == size) || (this.getSteps() * 0.8 <= size);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class RedisGenerator extends AbstractGenerator {
             if (setRedisLock()) {
                 getExecutorService().execute(() -> {
                     Segment segment = getGeneratorLoad().load();
-                    Long start = segment.getSegment() + 1;
+                    long start = segment.getSegment() + 1;
                     Integer steps = segment.getSteps();
                     Long[] longs = new Long[steps];
 

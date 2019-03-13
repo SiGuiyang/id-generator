@@ -77,9 +77,9 @@ public class GeneratorUtils {
 
     private static String getRealURL(FieldMeta fieldMeta) {
         String url = null;
+        String requestUrl = System.getProperty("id.generator.requestUrl");
         // 是否存在批量处理
         if (fieldMeta.isSingleOperation()) {
-            String requestUrl = System.getProperty("id.generator.requestUrl");
             Assert.notNull(requestUrl, "请配置 System.setProperty('id.generator.requestUrl','requestUrl') 设置请求Id生成器的服务");
             url = requestUrl + "/id/generator/" + fieldMeta.getBizName();
         } else {

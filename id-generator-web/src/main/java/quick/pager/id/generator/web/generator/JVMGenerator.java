@@ -40,7 +40,7 @@ public class JVMGenerator extends AbstractGenerator {
 
     @Override
     public boolean loadOverflow() {
-        return BLOCKING_DEQUE.isEmpty() || (this.getSteps() * 0.9 <= BLOCKING_DEQUE.size());
+        return BLOCKING_DEQUE.isEmpty() || (this.getSteps() * 0.8 <= BLOCKING_DEQUE.size());
     }
 
     @Override

@@ -9,16 +9,22 @@ public interface Constants {
 
         JVM(0, "JVM"),
         REDIS(1, "redis"),
-        ZOOKEEPER(2,"zookeeper");
+        ZOOKEEPER(2, "zookeeper");
 
-        public int type;
+        private int type;
 
-        public String name;
+        private String name;
 
         BizType(int type, String name) {
             this.type = type;
             this.name = name;
         }
 
-    }
+        public int getType() {
+            return type;
+        }
+
+        public String getName() {
+            return name;
+        }}
 }
