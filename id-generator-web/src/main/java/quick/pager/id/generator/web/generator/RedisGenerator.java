@@ -1,6 +1,6 @@
 package quick.pager.id.generator.web.generator;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -110,12 +110,7 @@ public class RedisGenerator extends AbstractGenerator {
             @Nullable
             @Override
             public Boolean doInRedis(@NonNull RedisConnection connection) throws DataAccessException {
-                try {
-                    return connection.setNX(getRedisLockKeys().getBytes("UTF-8"), "1".getBytes("UTF-8"));
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-                return false;
+                return connection.setNX(getRedisLockKeys().getBytes(StandardCharsets.UTF_8), "1".getBytes(StandardCharsets.UTF_8));
             }
         });
     }

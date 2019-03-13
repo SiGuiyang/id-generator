@@ -54,6 +54,13 @@
     <insert id="insert">
         insert into t_person(id,username,age,gender) values(2,'333',29,0)
     </insert>
+
+    <insert id="batchInsert" parameterType="list">
+        insert into t_person(id,username,age,gender)
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.id,jdbcType=BIGINT}, #{item.username,jdbcType=VARCHAR}, #{item.age,jdbcType=INTEGER}, #{item.gender,jdbcType=BIT})
+        </foreach>
+    </insert>
     <update id="updateByPrimaryKeySelective" parameterType="quick.pager.id.generator.demo.model.Person">
         update t_person
         <set>

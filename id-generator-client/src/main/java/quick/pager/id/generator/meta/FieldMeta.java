@@ -28,9 +28,4 @@ public class FieldMeta implements IMeta {
     public String getBizName() {
         return this.idGenerator.value();
     }
-
-    @Override
-    public boolean isSingleOperation() {
-        return idGenerator.singleOperation();
-    }
 }

@@ -18,12 +18,4 @@ public @interface IdGenerator {
      * biz_name 号段标识
      */
     String value() default "id";
-
-    /**
-     * 批量操作<br />
-     * 默认不批量处理<br />
-     * true 批量处理<br />
-     * 如果操作的实体类中存在批量插入的操作，则必须将此属性设置为false
-     */
-    boolean singleOperation() default true;
 }

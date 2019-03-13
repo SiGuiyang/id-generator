@@ -9,7 +9,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
-import java.util.Map;
+import java.util.Objects;
 import quick.pager.id.generator.Result;
 import quick.pager.id.generator.annotation.IdGenerator;
 import quick.pager.id.generator.cache.GeneratorMapCache;
@@ -31,7 +31,7 @@ public class GeneratorUtils {
         Class<?> clazz = entity.getClass();
 
         if (!GeneratorMapCache.FIELD_META_MAP.containsKey(clazz) && !GeneratorMapCache.PROPERTY_DESCRIPTOR_MAP.containsKey(clazz)) {
-            Field[] fields = clazz.getDeclaredFields();
+            Field[] fields = Objects.requireNonNull(clazz).getDeclaredFields();
             for (Field field : fields) {
                 if (field.isAnnotationPresent(IdGenerator.class)) {
                     GeneratorMapCache.FIELD_META_MAP.put(clazz, new FieldMeta(field, field.getAnnotation(IdGenerator.class)));
@@ -47,8 +47,10 @@ public class GeneratorUtils {
      * 并使用反射方式给字段设置当前的Id值
      */
     public static Serializable requestIdGeneratorAndSetValue(Object entity) throws InvocationTargetException, IllegalAccessException {
-        FieldMeta fieldMeta = GeneratorMapCache.FIELD_META_MAP.get(entity.getClass());
-        PropertyDescriptor propertyDescriptor = GeneratorMapCache.PROPERTY_DESCRIPTOR_MAP.get(entity.getClass());
+        Class<?> clazz = entity.getClass();
+
+        FieldMeta fieldMeta = GeneratorMapCache.FIELD_META_MAP.get(clazz);
+        PropertyDescriptor propertyDescriptor = GeneratorMapCache.PROPERTY_DESCRIPTOR_MAP.get(clazz);
 
         if (null == fieldMeta || null == propertyDescriptor) {
             throw new IdGeneratorException("数据缓存异常，请检查加入缓存的业务");
@@ -76,16 +78,9 @@ public class GeneratorUtils {
 
 
     private static String getRealURL(FieldMeta fieldMeta) {
-        String url = null;
         String requestUrl = System.getProperty("id.generator.requestUrl");
-        // 是否存在批量处理
-        if (fieldMeta.isSingleOperation()) {
-            Assert.notNull(requestUrl, "请配置 System.setProperty('id.generator.requestUrl','requestUrl') 设置请求Id生成器的服务");
-            url = requestUrl + "/id/generator/" + fieldMeta.getBizName();
-        } else {
-            // TODO 第一版暂不支持批量处理
-        }
-        return url;
+        Assert.notNull(requestUrl, "请配置 System.setProperty('id.generator.requestUrl','requestUrl') 设置请求Id生成器的服务");
+        return requestUrl + "/id/generator/" + fieldMeta.getBizName();
     }
 
     /**
@@ -95,6 +90,6 @@ public class GeneratorUtils {
      */
     public static boolean isAvailable(Object parameterObject) {
         Class clazz = parameterObject.getClass();
-        return !(parameterObject instanceof Map || clazz.isInterface() || clazz.isEnum() || Modifier.isAbstract(clazz.getModifiers()));
+        return !(clazz.isInterface() || clazz.isEnum() || Modifier.isAbstract(clazz.getModifiers()));
     }
 }

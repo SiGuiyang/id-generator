@@ -33,24 +33,5 @@ public class NoSpringTests {
             }
         });
     }
-//
-//    @Test
-//    public void testZK() throws Exception {
-//
-//        IdMaker idMaker = new IdMaker("127.0.0.1:2181",
-//                "/NameSpace/IdGen8899889", "ID");
-//        idMaker.start();
-//
-//        try {
-//            for (int i = 0; i < 5; i++) {
-//                String id = idMaker.generateId(IdMaker.RemoveMethod.DELAY);
-//                System.out.println(id);
-//
-//            }
-//        } finally {
-//            idMaker.stop();
-//
-//        }
-//    }
 
 }

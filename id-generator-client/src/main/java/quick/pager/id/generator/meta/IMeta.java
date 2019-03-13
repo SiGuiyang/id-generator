@@ -10,6 +10,4 @@ public interface IMeta {
     IdGenerator getIdGenerator();
 
     String getBizName();
-
-    boolean isSingleOperation();
 }

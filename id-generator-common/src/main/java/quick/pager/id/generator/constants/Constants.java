@@ -8,8 +8,7 @@ public interface Constants {
     enum BizType {
 
         JVM(0, "JVM"),
-        REDIS(1, "redis"),
-        ZOOKEEPER(2, "zookeeper");
+        REDIS(1, "redis");
 
         private int type;
 
@@ -26,5 +25,6 @@ public interface Constants {
 
         public String getName() {
             return name;
-        }}
+        }
+    }
 }
